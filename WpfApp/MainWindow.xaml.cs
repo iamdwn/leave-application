@@ -9,6 +9,12 @@ using Paragraph = Microsoft.Office.Interop.Word.Paragraph;
 using Microsoft.Win32;
 using Range = Microsoft.Office.Interop.Word.Range;
 using System.Security.Cryptography.Xml;
+using System.Net.Mail;
+using System.Net;
+using Aspose.Words;
+using System.Windows.Controls;
+using System.IO;
+using System.Text;
 
 namespace WpfApp
 {
@@ -18,6 +24,7 @@ namespace WpfApp
         {
             InitializeComponent();
         }
+        string pdfFilePath;
 
         private void BrowseTemplateButton_Click(object sender, RoutedEventArgs e)
         {
@@ -118,7 +125,7 @@ namespace WpfApp
                 }
 
                 doc.SaveAs2(savePath);
-                string pdfFilePath = System.IO.Path.ChangeExtension(savePath, ".pdf");
+                pdfFilePath = System.IO.Path.ChangeExtension(savePath, ".pdf");
                 doc.ExportAsFixedFormat(pdfFilePath, WdExportFormat.wdExportFormatPDF);
 
                 MessageBox.Show("File đã được lưu thành công tại: " + savePath);
@@ -147,6 +154,91 @@ namespace WpfApp
                 range.Find.Replacement.Text = replaceText;
 
                 range.Find.Execute(Replace: WdReplace.wdReplaceAll);
+            }
+        }
+
+        private void SendMailButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                SendEmail(TemplatePathTextBox.Text, pdfFilePath);
+                MessageBox.Show("Gửi email thành công!");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Gửi email thất bại!");
+            }
+        }
+
+        private async void SendEmail(string attachment1, string attachment2)
+        {
+            Microsoft.Office.Interop.Word.Application wordApp = new Microsoft.Office.Interop.Word.Application();
+            Document doc = null;
+
+            try
+            {
+                doc = wordApp.Documents.Open(TemplatePathTextBox.Text);
+
+                string htmlFilePath = System.IO.Path.ChangeExtension(TemplatePathTextBox.Text, ".html");
+                doc.SaveAs2(htmlFilePath, WdSaveFormat.wdFormatHTML);
+
+                if (doc != null)
+                {
+                    doc.Close(false);
+                    System.Runtime.InteropServices.Marshal.ReleaseComObject(doc);
+                    doc = null;
+                }
+
+                wordApp.Quit();
+                System.Runtime.InteropServices.Marshal.ReleaseComObject(wordApp);
+                wordApp = null;
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+
+                string htmlBody = File.ReadAllText(htmlFilePath, Encoding.UTF8);
+                string subject = $"Đơn xin phép nghỉ học";
+                string body = @"<html><head><meta charset=""UTF-8""></head><body>" + htmlBody + "</body></html>";
+
+                System.Net.Mail.MailMessage mail = new System.Net.Mail.MailMessage()
+                {
+                    From = new MailAddress("nextintern.corp@gmail.com", "Duong Truong"),
+                    Subject = subject,
+                    IsBodyHtml = true,
+                    BodyEncoding = Encoding.UTF8,
+                    SubjectEncoding = Encoding.UTF8
+                };
+
+                mail.Attachments.Add(new System.Net.Mail.Attachment(attachment1));
+                mail.Attachments.Add(new System.Net.Mail.Attachment(attachment2));
+                AlternateView alternateView = AlternateView.CreateAlternateViewFromString(body, Encoding.UTF8, "text/html");
+                mail.AlternateViews.Add(alternateView);
+
+                mail.To.Add(TeacherEmailTextBox.Text);
+
+                SmtpClient smtpClient = new SmtpClient("smtp.gmail.com")
+                {
+                    Port = 587,
+                    Credentials = new NetworkCredential("nextintern.corp@gmail.com", "wflm cyhu ifww lnbz"),
+                    EnableSsl = true
+                };
+
+                await smtpClient.SendMailAsync(mail);
+            }
+            catch (Exception ex)
+            {
+   
+                MessageBox.Show($"Error sending email to {TeacherNameTextBox.Text} ({TeacherEmailTextBox.Text}): {ex.Message}");
+            }
+            finally
+            {
+                if (doc != null)
+                {
+                    System.Runtime.InteropServices.Marshal.ReleaseComObject(doc);
+                }
+                if (wordApp != null)
+                {
+                    System.Runtime.InteropServices.Marshal.ReleaseComObject(wordApp);
+                }
             }
         }
 

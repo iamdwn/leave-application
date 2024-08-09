@@ -31,4 +31,8 @@
 		</COMReference>
 	</ItemGroup>
 
+	<ItemGroup>
+	  <PackageReference Include="Aspose.Words" Version="24.8.0" />
+	</ItemGroup>
+
 </Project>
