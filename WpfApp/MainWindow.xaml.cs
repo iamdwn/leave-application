@@ -44,7 +44,7 @@ namespace WpfApp
         {
             var dialog = new OpenFileDialog
             {
-                Title = "Chọn đường dẫn để lấy template"
+                Title = "Chọn đường dẫn để lưu"
             };
 
             if (dialog.ShowDialog() == true)
@@ -197,7 +197,21 @@ namespace WpfApp
 
                 string htmlBody = File.ReadAllText(htmlFilePath, Encoding.UTF8);
                 string subject = $"Đơn xin phép nghỉ học";
-                string body = @"<html><head><meta charset=""UTF-8""></head><body>" + htmlBody + "</body></html>";
+                //string body = @"<html><head><meta charset=""UTF-8""></head><body>" + htmlBody + "</body></html>";
+                string body = $@"
+                            <p>ĐƠN XIN NGHỈ PHÉP</p>
+                            <p><strong>Kính gửi:</strong> {TeacherNameTextBox.Text}</p>
+                            <p><strong>Tên tôi là:</strong> {FullNameTextBox.Text}</p>
+                            <p><strong>Mã lớp:</strong> {ClassCodeTextBox.Text}</p>
+                            <p><strong>Tên môn:</strong> {SubjectTextBox.Text}</p>
+                            <p><strong>Ngày nghỉ:</strong> {LeaveDatePicker.SelectedDate?.ToShortDateString() ?? string.Empty}</p>
+                            <p><strong>Lí do nghỉ:</strong> {ReasonTextBox.Text}</p>
+                            <p><strong>Email giáo viên:</strong> {TeacherEmailTextBox.Text}</p>
+                            <p>Tôi xin phép được nghỉ học. Tôi cam kết sẽ bổ sung và hoàn thành bài tập và kiến thức đã lỡ sau khi trở lại lớp.</p>
+                            <p>Kính mong giáo viên chấp thuận.</p>
+                            <p>Xin chân thành cảm ơn!</p>
+                            <p><strong>Ngày:</strong> {CurrentDatePicker.SelectedDate?.ToShortDateString() ?? string.Empty}</p>
+                            <p><strong>Ký tên:</strong> {SignatureTextBox.Text}</p>";
 
                 System.Net.Mail.MailMessage mail = new System.Net.Mail.MailMessage()
                 {
@@ -226,7 +240,7 @@ namespace WpfApp
             }
             catch (Exception ex)
             {
-   
+
                 MessageBox.Show($"Error sending email to {TeacherNameTextBox.Text} ({TeacherEmailTextBox.Text}): {ex.Message}");
             }
             finally
